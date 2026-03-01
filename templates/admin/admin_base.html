@@ -2,11 +2,14 @@
 
 {% block content %}
 <div x-data="{ sidebarOpen: false }" x-cloak class="flex h-screen pt-20 bg-slate-900 overflow-hidden">
-    <!-- Sidebar -->
+    <!-- Sidebar (Desktop) -->
     {% include 'components/sidebar.html' %}
 
+    <!-- Mobile Navigation -->
+    {% include 'components/bottom_nav.html' %}
+
     <!-- Content Area -->
-    <div class="flex-1 overflow-y-auto p-4 md:p-8">
+    <div class="flex-1 overflow-y-auto p-4 md:p-8 pb-32 lg:pb-8">
         {% block admin_content %}{% endblock %}
     </div>
 </div>
