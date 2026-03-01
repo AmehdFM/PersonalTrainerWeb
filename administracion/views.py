@@ -261,14 +261,27 @@ def admin_rutina_builder(request, pk=None):
             
             if ex_res.status_code == 200:
                 exercises_json = ex_res.json()
+                if isinstance(exercises_json, dict) and 'results' in exercises_json:
+                    exercises_json = exercises_json['results']
                 cache.set('routine_exercises_list', exercises_json, 86400) # 24h
             if tags_res.status_code == 200:
                 tags_json = tags_res.json()
+                if isinstance(tags_json, dict) and 'results' in tags_json:
+                    tags_json = tags_json['results']
                 cache.set('routine_tags_list', tags_json, 86400) # 24h
         except Exception as e:
             print(f"Error fetching microservice data: {e}")
             exercises_json = exercises_json or []
             tags_json = tags_json or []
+
+    # Final safety check for lists
+    if isinstance(exercises_json, dict) and 'results' in exercises_json:
+        exercises_json = exercises_json['results']
+    if isinstance(tags_json, dict) and 'results' in tags_json:
+        tags_json = tags_json['results']
+    
+    exercises_json = exercises_json or []
+    tags_json = tags_json or []
         
     clientes_data = [{'pk': c.pk, 'nombre_completo': c.nombre_completo, 'email': c.correo} for c in clientes]
     
@@ -295,8 +308,8 @@ def admin_rutina_builder(request, pk=None):
                 # Try to find the actual name from the exercises we just loaded/cached
                 ej_name = 'Ejercicio'
                 if exercises_json:
-                    # Match by 'id' as string or int, and support 'name' or 'nombre'
-                    matched = next((x for x in exercises_json if str(x.get('id', '')) == str(ej.ejercicio_id)), None)
+                    # Match by 'id' or 'pk' and support 'name' or 'nombre'
+                    matched = next((x for x in exercises_json if str(x.get('id', x.get('pk', ''))) == str(ej.ejercicio_id)), None)
                     if matched:
                         ej_name = matched.get('name') or matched.get('nombre') or 'Ejercicio'
 

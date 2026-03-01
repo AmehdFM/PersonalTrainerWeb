@@ -407,17 +407,18 @@
                     </div>
                     <div v-else
                         class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
-                        <div v-for="ex in filteredExercises" :key="ex.id" @click.stop="openModalForDay(ex)"
+                        <div v-for="ex in filteredExercises" :key="ex.id" @click="openModalForDay(ex)"
                             class="exercise-card relative aspect-square bg-slate-800/40 rounded-2xl border border-white/5 hover:border-blue-500/50 transition cursor-pointer overflow-hidden group">
 
-                            <div class="absolute inset-0 p-3 flex flex-col items-center justify-center text-center">
+                            <div
+                                class="absolute inset-0 p-3 flex flex-col items-center justify-center text-center pointer-events-none">
                                 <span class="text-[10px] font-bold text-slate-300 px-1 leading-tight uppercase">[[
-                                    ex.name || ex.nombre
+                                    ex.name || ex.nombre || 'Sin nombre'
                                     ]]</span>
                             </div>
 
-                            <!-- Image Preview (Small indicator instead of full overlay for better mobile performance) -->
-                            <div v-if="ex.gif_url" class="absolute bottom-2 right-2">
+                            <!-- Indicator -->
+                            <div v-if="ex.gif_url" class="absolute bottom-2 right-2 pointer-events-none">
                                 <div class="w-6 h-6 rounded-lg bg-blue-600/20 flex items-center justify-center">
                                     <svg class="w-3 h-3 text-blue-400" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
@@ -603,6 +604,15 @@
                 getDayName(val) {
                     return ['?', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'][val] || 'Especial';
                 },
+                debug() {
+                    console.log('App State:', {
+                        activeDayIndex: this.activeDayIndex,
+                        activeExerciseIndex: this.activeExerciseIndex,
+                        showCatalogModal: this.showCatalogModal,
+                        previewingExercise: this.previewingExercise,
+                        exercisesCount: this.exercises ? this.exercises.length : 0
+                    });
+                },
                 toggleDayForBlock(block, dayVal) {
                     if (this.hasDay(dayVal) && !block.dias.includes(dayVal)) {
                         // Si otro bloque ya lo tiene, no permitimos añadirlo aquí a menos que sea un toggle de eliminación
@@ -629,13 +639,15 @@
                     this.days.splice(index, 1);
                 },
                 openCatalog(dayIndex) {
+                    console.log('Opening catalog for day:', dayIndex);
                     this.activeDayIndex = dayIndex;
                     this.showCatalogModal = true;
                 },
                 openModalForDay(ex) {
+                    console.log('Opening exercise modal for:', ex);
                     this.previewingExercise = {
-                        id: ex.id,
-                        name: ex.name || ex.nombre,
+                        id: ex.id || ex.pk,
+                        name: ex.name || ex.nombre || 'Ejercicio',
                         gif_url: ex.gif_url,
                         tags: ex.tags || []
                     };
@@ -678,6 +690,11 @@
                 },
                 saveExerciseFromModal() {
                     const day = this.days[this.activeDayIndex];
+                    if (!day) {
+                        console.error('No active day selected!');
+                        return;
+                    }
+
                     const exerciseData = {
                         id_externo: this.previewingExercise.id,
                         name: this.previewingExercise.name,
