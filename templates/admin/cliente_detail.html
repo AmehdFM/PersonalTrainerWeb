@@ -53,9 +53,9 @@
         };
         this.modalOpen = true;
     }
-}" class="space-y-8 pb-20">
+}" class="space-y-8 pb-32">
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
         <div class="flex items-center space-x-4">
             <a href="{% url 'admin_clientes' %}"
                 class="hover:bg-slate-800 p-2 rounded-xl text-slate-400 hover:text-white transition">
@@ -82,17 +82,18 @@
     </div>
 
     <!-- Tabs Navigation -->
-    <div class="flex border-b border-slate-800/50">
+    <div
+        class="flex border-b border-slate-800/50 overflow-x-auto scrollbar-hide whitespace-nowrap -mx-4 px-4 sticky top-0 bg-slate-900/80 backdrop-blur-md z-30">
         <button onclick="showTab('datos')" id="tab-datos"
-            class="nav-tab active px-6 py-4 font-bold text-slate-500 hover:text-white transition uppercase text-xs tracking-widest">
-            Información del Cliente
+            class="nav-tab active px-6 py-4 font-black transition uppercase text-[10px] tracking-widest flex-shrink-0">
+            Información
         </button>
         <button onclick="showTab('medidas')" id="tab-medidas"
-            class="nav-tab px-6 py-4 font-bold text-slate-500 hover:text-white transition uppercase text-xs tracking-widest">
-            Historial de Medidas
+            class="nav-tab px-6 py-4 font-black transition uppercase text-[10px] tracking-widest flex-shrink-0">
+            Medidas
         </button>
         <button onclick="showTab('rutinas')" id="tab-rutinas"
-            class="nav-tab px-6 py-4 font-bold text-slate-500 hover:text-white transition uppercase text-xs tracking-widest">
+            class="nav-tab px-6 py-4 font-black transition uppercase text-[10px] tracking-widest flex-shrink-0">
             Rutinas
         </button>
     </div>
@@ -222,8 +223,8 @@
                 </button>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
+            <div class="overflow-x-auto scrollbar-hide -mx-4 px-4">
+                <table class="w-full text-left whitespace-nowrap">
                     <thead class="text-slate-600 text-[10px] uppercase font-black tracking-widest">
                         <tr>
                             <th class="pb-6 pr-6">Fecha</th>
