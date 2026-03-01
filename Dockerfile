@@ -8,6 +8,9 @@ ENV PYTHONUNBUFFERED=1
 # Establecer el directorio de trabajo
 WORKDIR /app
 
+# Crear el directorio para la base de datos
+RUN mkdir -p /app/base_de_datos
+
 # Instalar dependencias del sistema necesarias para algunas librerías de Python (como Pillow)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \

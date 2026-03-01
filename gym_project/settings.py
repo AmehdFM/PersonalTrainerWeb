@@ -86,7 +86,7 @@ WSGI_APPLICATION = 'gym_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'base_de_datos' / 'db.sqlite3',
     }
 }
 
