@@ -295,9 +295,10 @@ def admin_rutina_builder(request, pk=None):
                 # Try to find the actual name from the exercises we just loaded/cached
                 ej_name = 'Ejercicio'
                 if exercises_json:
-                    matched = next((x for x in exercises_json if str(x.get('id')) == str(ej.ejercicio_id)), None)
+                    # Match by 'id' as string or int, and support 'name' or 'nombre'
+                    matched = next((x for x in exercises_json if str(x.get('id', '')) == str(ej.ejercicio_id)), None)
                     if matched:
-                        ej_name = matched.get('name')
+                        ej_name = matched.get('name') or matched.get('nombre') or 'Ejercicio'
 
                 day_json['exercises'].append({
                     'id_externo': ej.ejercicio_id,
