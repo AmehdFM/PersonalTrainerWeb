@@ -1,0 +1,149 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block admin_content %}
+<div id="section-clientes" class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold">Gestión de <span class="text-blue-500">Clientes</span></h1>
+        <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 items-center">
+            <div class="relative group w-full md:w-64">
+                <input type="text" id="clientSearch" onkeyup="filterClients()" placeholder="Buscar cliente..."
+                    class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition pl-10">
+                <svg class="w-4 h-4 text-slate-500 absolute left-3 top-2.5 group-focus-within:text-blue-500 transition"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+            <button onclick="toggleModal('invite-modal')"
+                class="w-full md:w-auto bg-slate-800 hover:bg-slate-700 text-slate-300 px-6 py-2 rounded-xl font-bold border border-slate-700 transition">
+                Invitar Cliente
+            </button>
+            <button
+                class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-xl font-bold transition">Nuevo
+                Cliente</button>
+        </div>
+    </div>
+
+    <div class="bg-slate-800/40 rounded-[2rem] overflow-hidden">
+        <table class="w-full text-left">
+            <thead class="bg-white/5 text-slate-400 text-sm uppercase font-bold">
+                <tr>
+                    <th class="px-6 py-4">Cliente</th>
+                    <th class="px-6 py-4">Membresía</th>
+                    <th class="px-6 py-4">Vencimiento</th>
+                    <th class="px-6 py-4">Estado</th>
+                    <th class="px-6 py-4">IMC</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+                {% for cliente in clientes %}
+                <tr class="hover:bg-white/5 transition client-row">
+                    <td class="px-6 py-4 flex items-center space-x-3">
+                        <div
+                            class="w-10 h-10 rounded-full bg-slate-800 overflow-hidden flex items-center justify-center font-bold text-blue-500 border border-blue-500/20">
+                            {% if cliente.foto_perfil %}
+                            <img src="{{ cliente.foto_perfil.url }}" class="w-full h-full object-cover">
+                            {% else %}
+                            {{ cliente.nombre|slice:":1" }}
+                            {% endif %}
+                        </div>
+                        <div>
+                            <a href="{% url 'admin_cliente_detail' cliente.pk %}"
+                                class="font-bold search-target hover:text-blue-500 transition">
+                                {{ cliente.nombre_completo }}
+                            </a>
+                            <p class="text-xs text-slate-500">{{ cliente.correo }}</p>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 font-medium italic">
+                        {{ cliente.active_membership.0.tipo.get_nombre_display|default:"Sin membresía" }}
+                    </td>
+                    <td class="px-6 py-4 text-slate-400">
+                        {{ cliente.active_membership.0.fecha_fin|date:"d M Y"|default:"-" }}
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if cliente.active_membership.0 %}
+                        <span
+                            class="px-3 py-1 bg-green-500/10 text-green-500 rounded-full text-xs font-bold uppercase">Activa</span>
+                        {% else %}
+                        <span
+                            class="px-3 py-1 bg-slate-500/10 text-slate-500 rounded-full text-xs font-bold uppercase">Inactiva</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 font-mono">{{ cliente.perfil_cliente.imc|default:"0.0" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-10 text-center text-slate-500">No hay clientes registrados
+                        aún.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- INVITATION MODAL -->
+<div id="invite-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-sm" onclick="toggleModal('invite-modal')"></div>
+    <div class="bg-slate-800 border border-slate-700 max-w-md w-full p-8 rounded-[2rem] shadow-2xl relative z-10 scale-90 transition-transform"
+        id="modal-box">
+        <h3 class="text-2xl font-bold mb-2">Enviar <span class="text-blue-500">Invitación</span></h3>
+        <p class="text-slate-400 mb-6 text-sm">Ingresa el correo del nuevo cliente y le enviaremos un link de acceso
+            directo.</p>
+
+        <form class="space-y-4"
+            onsubmit="event.preventDefault(); alert('Invitación enviada'); toggleModal('invite-modal');">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Correo
+                    electrónico</label>
+                <input type="email" placeholder="cliente@ejemplo.com"
+                    class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition">
+            </div>
+            <button type="submit"
+                class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-900/40 transition-all active:scale-95">
+                Enviar Invitación
+            </button>
+            <button type="button" onclick="toggleModal('invite-modal')"
+                class="w-full text-slate-500 text-sm font-medium hover:text-slate-400 transition">
+                Cancelar
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function filterClients() {
+        const input = document.getElementById('clientSearch');
+        const filter = input.value.toLowerCase();
+        const rows = document.querySelectorAll('.client-row');
+
+        rows.forEach(row => {
+            const target = row.querySelector('.search-target').innerText.toLowerCase();
+            if (target.includes(filter)) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+
+    function toggleModal(modalId) {
+        const modal = document.getElementById(modalId);
+        const box = modal.querySelector('#modal-box');
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => box.classList.remove('scale-90'), 10);
+        } else {
+            box.classList.add('scale-90');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 200);
+        }
+    }
+</script>
+{% endblock %}

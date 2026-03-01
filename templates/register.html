@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center pt-24 px-4">
+    <div class="glass max-w-2xl w-full p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+        <!-- Glow Decor -->
+        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-600/20 rounded-full blur-3xl"></div>
+
+        <div class="relative z-10 text-center">
+            <h2 class="text-3xl font-bold mb-4">Únete a la <span class="text-gradient">revolución</span></h2>
+            <p class="text-slate-400 mb-8 max-w-sm mx-auto">Únete a cientos de atletas que ya gestionan su progreso en
+                lbs con nosotros.</p>
+
+            <form method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                {% csrf_token %}
+                {% if form.errors and not form.non_field_errors %}
+                <div class="md:col-span-2 bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl text-sm">
+                    Por favor, corrige los errores abajo.
+                </div>
+                {% endif %}
+                {% if form.non_field_errors %}
+                <div class="md:col-span-2 bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl text-sm">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-400 mb-2">Nombre</label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}
+                    <p class="text-xs text-red-400 mt-1">{{ form.nombre.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-400 mb-2">Apellidos</label>
+                    {{ form.apellido }}
+                    {% if form.apellido.errors %}
+                    <p class="text-xs text-red-400 mt-1">{{ form.apellido.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-slate-400 mb-2">Correo electrónico</label>
+                    {{ form.correo }}
+                    {% if form.correo.errors %}
+                    <p class="text-xs text-red-400 mt-1">{{ form.correo.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div class="md:col-span-1">
+                    <label class="block text-sm font-semibold text-slate-400 mb-2">Contraseña</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                    <div class="text-xs text-red-400 mt-1 space-y-1">
+                        {% for error in form.password1.errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="md:col-span-1">
+                    <label class="block text-sm font-semibold text-slate-400 mb-2">Confirmar contraseña</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                    <p class="text-xs text-red-400 mt-1">{{ form.password2.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="md:col-span-2 mt-2">
+                    <button type="submit"
+                        class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/40 transition-all active:scale-95 text-lg">
+                        Crear mi cuenta
+                    </button>
+                </div>
+            </form>
+
+            <p class="mt-8 text-slate-500 text-sm">
+                ¿Ya tienes una cuenta? <a href="/login"
+                    class="text-blue-400 font-bold hover:text-blue-300 hover:underline">Inicia sesión</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

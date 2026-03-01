@@ -1,0 +1,37 @@
+<nav class="fixed top-0 left-0 right-0 z-50 glass m-4 rounded-2xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+            <div class="flex items-center space-x-2">
+                <a href="/" class="flex items-center space-x-2">
+                    <div
+                        class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold italic text-white shadow-lg shadow-blue-900/40">
+                        G</div>
+                    <span class="text-xl font-bold tracking-tight text-white">GYM<span
+                            class="text-blue-500">PRO</span></span>
+                </a>
+            </div>
+
+            <div class="hidden md:flex space-x-8">
+                <!-- Nav links could go here -->
+            </div>
+
+            <div class="flex items-center space-x-4">
+                {% if user.is_authenticated %}
+                {% if request.path != '/dashboard/' %}
+                <a href="/dashboard/"
+                    class="bg-blue-600 hover:bg-blue-500 text-sm font-semibold text-white px-5 py-2.5 rounded-xl shadow-lg shadow-blue-900/40 transition-all active:scale-95">
+                    Ir al Panel
+                </a>
+                {% endif %}
+                {% else %}
+                <a href="/login/"
+                    class="text-sm font-medium text-slate-300 hover:text-blue-400 transition px-4 py-2">Ingresar</a>
+                <a href="/register/"
+                    class="bg-blue-600 hover:bg-blue-500 text-sm font-semibold text-white px-5 py-2.5 rounded-xl shadow-lg shadow-blue-900/40 transition-all active:scale-95">
+                    Registrarme
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>

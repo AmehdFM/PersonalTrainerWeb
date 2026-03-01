@@ -1,0 +1,727 @@
+{% extends 'admin/admin_base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+    .exercise-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+
+    .exercise-card:hover .preview-overlay {
+        opacity: 1;
+    }
+
+    .day-column {
+        min-height: 200px;
+    }
+
+    [v-cloak] {
+        display: none;
+    }
+
+    /* Custom Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 10px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #475569;
+    }
+
+    /* Animations */
+    .fade-enter-active,
+    .fade-leave-active {
+        transition: opacity 0.3s;
+    }
+
+    .fade-enter-from,
+    .fade-leave-to {
+        opacity: 0;
+    }
+</style>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuedraggable@4.1.0/dist/vuedraggable.umd.min.js"></script>
+{% endblock %}
+
+{% block admin_content %}
+<div id="app" v-cloak class="h-[calc(100vh-100px)] flex flex-col space-y-4">
+    {{ rutina_data|json_script:"rutina-data-json" }}
+    <div class="flex-1 flex flex-col min-h-0">
+        <!-- Main Builder -->
+        <div class="flex-1 flex flex-col space-y-4 min-h-0 pt-2">
+
+            <!-- Top Controls (Sticky) -->
+            <div class="shrink-0 bg-slate-900 flex flex-col border-b border-slate-800/50 z-40">
+                <!-- Top Bar Consolidated (Smaller) -->
+                <div class="px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="flex-1 w-full flex items-center space-x-4">
+                        <input v-model="routineName" type="text" placeholder="📝 Nombre de la rutina..."
+                            class="bg-transparent border-none text-xl md:text-2xl font-bold placeholder:text-slate-700/60 text-white focus:ring-0 w-full md:w-auto max-w-sm p-0">
+                    </div>
+
+                    <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto shrink-0">
+                        <div
+                            class="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800 w-full md:w-auto">
+                            <span
+                                class="text-[10px] font-bold text-slate-500 uppercase px-3 hidden md:block tracking-wider">Cliente:</span>
+                            <button @click="showClientModal = true"
+                                class="flex-1 md:flex-none flex items-center justify-between min-w-[150px] bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-200 transition text-left h-full border border-transparent">
+                                <span class="truncate pr-4">[[ selectedClienteName || 'Seleccionar...' ]]</span>
+                                <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div
+                            class="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800 w-full md:w-auto">
+                            <span
+                                class="text-[10px] font-bold text-slate-500 uppercase px-3 hidden md:block tracking-wider">Imagen:</span>
+                            <button @click="showImageModal = true"
+                                class="flex-1 md:flex-none flex items-center justify-center w-12 h-8 bg-slate-800 hover:bg-slate-700 rounded-lg overflow-hidden border border-transparent transition">
+                                <img v-if="routineImage" :src="routineImage" class="w-full h-full object-cover">
+                                <svg v-else class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center space-x-3 w-full md:w-auto">
+                            <div v-if="saving"
+                                class="flex items-center text-blue-400 text-[10px] uppercase font-bold animate-pulse px-2">
+                                Guardando...
+                            </div>
+                            <button @click="saveRoutine" :disabled="!isReady || saving"
+                                class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed px-5 py-2 rounded-xl text-sm font-bold transition active:scale-95 text-white flex items-center justify-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span>Guardar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day Selector Bar -->
+                <div
+                    class="px-6 py-3 flex overflow-x-auto custom-scrollbar gap-2 bg-slate-900/50 border-t border-slate-800/30">
+                    <button v-for="d in [
+                        {val: 1, label: '+ Lunes'},
+                        {val: 2, label: '+ Martes'},
+                        {val: 3, label: '+ Miércoles'},
+                        {val: 4, label: '+ Jueves'},
+                        {val: 5, label: '+ Viernes'},
+                        {val: 6, label: '+ Sábado'},
+                        {val: 7, label: '+ Domingo'}
+                    ]" :key="'add-' + d.val" @click="addSpecificDay(d.val, d.label.substring(2))"
+                        :class="hasDay(d.val) ? 'bg-blue-600/20 text-blue-400 border-blue-500/30 ring-1 ring-blue-500/50 cursor-default' : 'bg-slate-800/50 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700'"
+                        class="px-4 py-1.5 rounded-lg border transition font-bold text-xs whitespace-nowrap">
+                        [[ d.label ]]
+                    </button>
+                    <!-- Custom day/block -->
+                    <button @click="addDay"
+                        class="bg-blue-600/10 text-blue-500 hover:bg-blue-600/20 px-4 py-1.5 rounded-lg border border-blue-500/20 transition font-bold text-xs whitespace-nowrap flex items-center space-x-1 ml-auto">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span>Especial</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Days Workspace -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-6 pb-20">
+                <div v-for="(day, dIndex) in days" :key="dIndex"
+                    class="group flex flex-col border-b border-slate-800/50 pb-8 mb-8 last:border-0 last:mb-0 last:pb-0">
+
+                    <div class="px-6 py-2 flex items-center justify-between gap-4">
+                        <div class="flex items-center space-x-4 w-full">
+                            <!-- Day Indicators (Read-only) -->
+                            <div class="flex -space-x-1.5 shrink-0">
+                                <div v-for="dVal in day.dias" :key="dVal"
+                                    class="w-7 h-7 rounded-full bg-blue-600 border-2 border-slate-900 flex items-center justify-center text-[10px] font-bold text-white shadow-lg"
+                                    :title="getDayName(dVal)">
+                                    [[ getDayInitial(dVal) ]]
+                                </div>
+                                <div v-if="day.dias.length === 0"
+                                    class="w-7 h-7 rounded-full bg-slate-800 border-2 border-slate-900 flex items-center justify-center text-[10px] font-bold text-slate-500 whitespace-nowrap px-1">
+                                    ESP
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-4 flex-1">
+                                <div
+                                    class="text-[10px] font-bold text-slate-500 uppercase tracking-widest shrink-0 opacity-50">
+                                    Bloque [[ dIndex + 1 ]]
+                                </div>
+                                <input v-model="day.nombre_bloque" type="text"
+                                    placeholder="Nombre del bloque (ej. Empuje, Pierna...)"
+                                    class="bg-transparent border-none font-bold text-xl text-slate-200 focus:ring-0 w-full placeholder:text-slate-700/60 px-0">
+                            </div>
+                        </div>
+
+                        <button @click="removeDay(dIndex)"
+                            class="p-2 text-slate-600 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition md:opacity-0 md:group-hover:opacity-100 shrink-0 self-end md:self-auto">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="p-6">
+                        <!-- Draggable Exercises List -->
+                        <draggable v-model="day.exercises" item-key="id_externo" handle=".drag-handle"
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            <template #item="{ element: ex, index: eIndex }">
+                                <div @click="editExercise(dIndex, eIndex)"
+                                    class="relative bg-slate-900/40 p-5 hover:bg-slate-800/60 transition group/card flex flex-col min-h-[140px] border border-transparent hover:border-blue-500/30 cursor-pointer rounded-2xl">
+
+                                    <!-- Drag Handle -->
+                                    <div
+                                        class="drag-handle absolute top-3 left-3 opacity-0 group-hover/card:opacity-100 transition cursor-grab active:cursor-grabbing p-1 text-slate-600 hover:text-slate-400">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M4 8h16M4 16h16" />
+                                        </svg>
+                                    </div>
+
+                                    <button @click.stop="removeExercise(dIndex, eIndex)"
+                                        class="absolute top-3 right-3 text-slate-600 hover:text-red-500 bg-slate-900/50 p-1.5 rounded-lg opacity-0 group-hover/card:opacity-100 transition z-10">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+
+                                    <div class="flex items-center space-x-3 mb-4 pr-6 overflow-hidden">
+                                        <div
+                                            class="bg-slate-800 text-slate-400 font-bold w-6 h-6 rounded flex items-center justify-center text-xs shrink-0">
+                                            [[ eIndex + 1 ]]
+                                        </div>
+                                        <div v-if="ex.gif_url"
+                                            class="w-8 h-8 rounded-lg overflow-hidden bg-black shrink-0 border border-slate-700">
+                                            <img :src="ex.gif_url" class="w-full h-full object-cover">
+                                        </div>
+                                        <h4 class="font-bold text-xs uppercase text-slate-200 truncate"
+                                            :title="ex.name">
+                                            [[ ex.name ]]
+                                        </h4>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-2 mt-auto">
+                                        <div class="bg-slate-900/50 p-2 rounded-lg text-center">
+                                            <div class="text-[10px] text-slate-500 font-bold uppercase mb-0.5">Series x
+                                                Reps
+                                            </div>
+                                            <div class="text-xs font-bold text-blue-400">[[ ex.series ]] x [[ ex.reps ]]
+                                            </div>
+                                        </div>
+                                        <div class="bg-slate-900/50 p-2 rounded-lg text-center">
+                                            <div class="text-[10px] text-slate-500 font-bold uppercase mb-0.5">Metr.
+                                            </div>
+                                            <div class="text-xs font-bold text-white">
+                                                [[ ex.peso ? ex.peso + 'lb | ' : '' ]][[ ex.descanso ]]s
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- "Añadir Ejercicio" Card (Footer of draggable) -->
+                            <template #footer>
+                                <div @click="openCatalog(dIndex)"
+                                    class="bg-blue-600/5 hover:bg-blue-600/10 border border-blue-500/20 hover:border-blue-500/50 border-dashed p-6 flex flex-col items-center justify-center cursor-pointer transition text-blue-500 hover:text-blue-400 min-h-[140px] group/add rounded-2xl">
+                                    <div
+                                        class="w-12 h-12 rounded-full bg-blue-600/10 flex items-center justify-center mb-3 group-hover/add:scale-110 transition-transform">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 4v16m8-8H4" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm font-bold uppercase tracking-wider">Añadir Ejercicio</span>
+                                </div>
+                            </template>
+                        </draggable>
+                    </div>
+                    <!-- Spacer -->
+                    <div class="h-12 border-t border-slate-800/50 mt-4 opacity-0"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client Selection Modal -->
+        <div v-if="showClientModal"
+            class="fixed inset-0 bg-slate-900/95 backdrop-blur-md z-50 flex flex-col animate-scaleIn">
+            <div class="flex items-center justify-between p-6 border-b border-white/5">
+                <h2 class="text-2xl font-bold text-white">Seleccionar Cliente</h2>
+                <button @click="showClientModal = false"
+                    class="text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-full transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 border-b border-white/5 bg-slate-900">
+                <div class="max-w-3xl mx-auto">
+                    <div class="relative w-full">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </span>
+                        <input v-model="clientSearchQuery" type="text" placeholder="Buscar por nombre o correo..."
+                            class="w-full bg-slate-800 border border-slate-700 rounded-2xl pl-12 pr-4 py-4 text-white focus:border-blue-500 outline-none transition text-lg">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-900/50">
+                <div class="max-w-3xl mx-auto space-y-3">
+                    <div v-if="filteredClients.length === 0" class="text-center py-20 text-slate-500">
+                        No se encontraron clientes que coincidan con la búsqueda.
+                    </div>
+                    <!-- Client List Items -->
+                    <button v-for="cliente in filteredClients" :key="cliente.pk" @click="selectClient(cliente)"
+                        class="w-full text-left glass bg-slate-800/50 hover:bg-slate-700 p-5 rounded-2xl border border-slate-700 hover:border-blue-500 transition flex items-center justify-between group">
+                        <div class="flex items-center space-x-4">
+                            <div
+                                class="w-12 h-12 rounded-full bg-blue-600/20 text-blue-500 flex items-center justify-center font-bold text-lg">
+                                [[ cliente.nombre_completo.charAt(0).toUpperCase() ]]
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-white text-lg leading-tight">[[ cliente.nombre_completo ]]
+                                </h3>
+                                <p class="text-sm text-slate-400">[[ cliente.email || 'Sin correo' ]]</p>
+                            </div>
+                        </div>
+                        <div
+                            class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center text-blue-400 space-x-2">
+                            <span class="text-sm font-bold">Seleccionar</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Image Selection Modal -->
+        <div v-if="showImageModal"
+            class="fixed inset-0 bg-slate-900/95 backdrop-blur-md z-50 flex flex-col animate-scaleIn">
+            <div class="flex items-center justify-between p-6 border-b border-white/5">
+                <h2 class="text-2xl font-bold text-white">Imagen de la Rutina</h2>
+                <button @click="showImageModal = false"
+                    class="text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-full transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-8">
+                <div class="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <button v-for="(img, idx) in presetImages" :key="idx" @click="selectImage(img)"
+                        class="relative aspect-[4/5] bg-slate-800 rounded-2xl overflow-hidden border-2 transition-all hover:scale-[1.02] active:scale-95 group"
+                        :class="routineImage === img ? 'border-blue-500 ring-4 ring-blue-500/20' : 'border-slate-700 hover:border-slate-500'">
+                        <img :src="img" class="w-full h-full object-cover group-hover:opacity-80 transition-opacity">
+                        <div v-if="routineImage === img"
+                            class="absolute top-2 right-2 bg-blue-600 rounded-full p-1 shadow-lg">
+                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Catalog Modal -->
+        <div v-if="showCatalogModal"
+            class="fixed inset-0 bg-slate-900/95 backdrop-blur-md z-40 flex flex-col animate-scaleIn">
+            <div class="flex items-center justify-between p-6 border-b border-white/5">
+                <h2 class="text-2xl font-bold text-white">Catálogo de Ejercicios</h2>
+                <button @click="showCatalogModal = false"
+                    class="text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-full transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 border-b border-white/5 bg-slate-900">
+                <div class="max-w-4xl mx-auto flex flex-col md:flex-row gap-4 items-center justify-between">
+                    <div class="relative w-full md:w-1/2">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </span>
+                        <input v-model="searchQuery" type="text" placeholder="Buscar ejercicios..."
+                            class="w-full bg-slate-800 border border-slate-700 rounded-2xl pl-12 pr-4 py-3 text-white focus:border-blue-500 outline-none transition">
+                    </div>
+                    <!-- Tags -->
+                    <div class="flex flex-wrap gap-2 w-full md:w-1/2 justify-end custom-scrollbar overflow-x-auto pb-1">
+                        <button v-if="selectedTags.length" @click="selectedTags = []"
+                            class="text-xs text-blue-400 mr-2 whitespace-nowrap">Limpiar tags</button>
+                        <button v-for="tag in tags" :key="tag.id" @click="toggleTag(tag.name)"
+                            :class="['px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap', 
+                                     selectedTags.includes(tag.name) ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700']">
+                            [[ tag.name ]]
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-900/50">
+                <div class="max-w-7xl mx-auto">
+                    <div v-if="loadingExercises" class="flex flex-col items-center justify-center py-20 animate-pulse">
+                        <div
+                            class="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4">
+                        </div>
+                    </div>
+                    <div v-else class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                        <div v-for="ex in filteredExercises" :key="ex.id" @click="openModalForDay(ex)"
+                            class="exercise-card relative aspect-square glass bg-slate-800 rounded-2xl border border-slate-700 hover:border-blue-500 transition cursor-pointer overflow-hidden group">
+
+                            <div class="absolute inset-0 p-3 flex flex-col items-center justify-center text-center">
+                                <span class="text-[10px] font-bold text-slate-300 px-1 leading-tight uppercase">[[
+                                    ex.name
+                                    ]]</span>
+                            </div>
+
+                            <!-- Hover Overlay with GIF -->
+                            <div
+                                class="preview-overlay absolute inset-0 bg-slate-900 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col">
+                                <img v-if="ex.gif_url" :src="ex.gif_url" class="w-full h-2/3 object-cover bg-black"
+                                    loading="lazy">
+                                <div class="flex-1 p-2 flex flex-col justify-center items-center">
+                                    <button
+                                        class="w-full bg-blue-600 py-2 rounded-xl text-[10px] font-bold transition hover:bg-blue-500">AÑADIR
+                                        A DÍA [[ activeDayIndex + 1 ]]</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview/Assignment Modal -->
+        <div v-if="previewingExercise" @click="previewingExercise = null"
+            class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div @click.stop
+                class="glass w-full max-w-2xl flex flex-col md:flex-row rounded-[2rem] overflow-hidden shadow-2xl animate-scaleIn border border-slate-700">
+                <div class="relative w-full md:w-1/2 bg-black min-h-[250px] md:min-h-[400px]">
+                    <img v-if="previewingExercise.gif_url" :src="previewingExercise.gif_url"
+                        class="w-full h-full object-contain">
+                    <button @click="closeModal"
+                        class="absolute top-4 right-4 bg-black/50 p-2 rounded-full hover:bg-black transition text-white">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-8 w-full md:w-1/2 flex flex-col justify-between bg-slate-900">
+                    <div>
+                        <h2 class="text-xl font-bold mb-3 uppercase tracking-wide leading-tight text-white">[[
+                            previewingExercise.name ]]</h2>
+                        <div class="flex flex-wrap gap-1.5 mb-6">
+                            <span v-for="tag in previewingExercise.tags"
+                                class="bg-blue-600/20 text-blue-400 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">[[
+                                tag.name ]]</span>
+                        </div>
+                    </div>
+
+                    <!-- Assignment Form -->
+                    <div class="space-y-4 mb-6 relative z-10">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Series</label>
+                                <input v-model="modalData.series" type="number"
+                                    class="w-full bg-slate-800 border-none rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-white font-bold">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Repeticiones</label>
+                                <input v-model="modalData.reps" type="number"
+                                    class="w-full bg-slate-800 border-none rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-white font-bold">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Peso
+                                    (lb)</label>
+                                <input v-model="modalData.peso" type="number" placeholder="Opcional"
+                                    class="w-full bg-slate-800 border-none rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none placeholder:text-slate-600 text-white font-bold">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Descanso
+                                    (s)</label>
+                                <input v-model="modalData.descanso" type="number"
+                                    class="w-full bg-slate-800 border-none rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-white font-bold">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button @click="saveExerciseFromModal"
+                        class="w-full bg-blue-600 hover:bg-blue-500 py-3.5 rounded-xl font-bold transition flex items-center justify-center space-x-2 text-white shadow-lg shadow-blue-900/40 active:scale-95">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span>CONFIRMAR Y AÑADIR</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+
+    {% block extra_scripts %}
+    {{ exercises_json|json_script:"exercises-data" }}
+    {{ tags_json|json_script:"tags-data" }}
+    {{ clientes_data|json_script:"clientes-data" }}
+    {{ rutina_data|json_script:"rutina-data-json" }}
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            delimiters: ['[[', ']]'],
+            data() {
+                const rutinaData = JSON.parse(document.getElementById('rutina-data-json').textContent);
+                return {
+                    exercises: JSON.parse(document.getElementById('exercises-data').textContent),
+                    tags: JSON.parse(document.getElementById('tags-data').textContent),
+                    clientes: JSON.parse(document.getElementById('clientes-data').textContent),
+                    loadingExercises: false,
+                    searchQuery: '',
+                    clientSearchQuery: '',
+                    selectedTags: [],
+                    routineName: rutinaData ? rutinaData.nombre : '',
+                    routineImage: rutinaData ? rutinaData.imagen_url : '',
+                    selectedCliente: rutinaData ? rutinaData.cliente_id : '',
+                    selectedClienteName: rutinaData ? rutinaData.cliente_nombre : '',
+                    saving: false,
+                    previewingExercise: null,
+                    showCatalogModal: false,
+                    showClientModal: false,
+                    showImageModal: false,
+                    editingExercise: false,
+                    activeExerciseIndex: null,
+                    presetImages: [
+                        'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1000&auto=format&fit=crop',
+                        'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?q=80&w=1000&auto=format&fit=crop',
+                        'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?q=80&w=1000&auto=format&fit=crop',
+                        'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?q=80&w=1000&auto=format&fit=crop',
+                        'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1000&auto=format&fit=crop',
+                        'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=1000&auto=format&fit=crop',
+                        'https://images.unsplash.com/photo-1597452485669-2c7bb5fef90d?q=80&w=1000&auto=format&fit=crop',
+                        'https://images.unsplash.com/photo-1594882645126-14020914d58d?q=80&w=1000&auto=format&fit=crop'
+                    ],
+                    modalData: {
+                        series: 3,
+                        reps: 12,
+                        peso: null,
+                        descanso: 60
+                    },
+                    days: rutinaData ? rutinaData.days : []
+                }
+            },
+            computed: {
+                filteredExercises() {
+                    return this.exercises.filter(ex => {
+                        const query = this.searchQuery.toLowerCase();
+                        const matchesSearch = ex.name.toLowerCase().includes(query) ||
+                            (ex.description && ex.description.toLowerCase().includes(query));
+                        const matchesTags = this.selectedTags.length === 0 ||
+                            ex.tags.some(t => this.selectedTags.includes(t.name));
+                        return matchesSearch && matchesTags;
+                    });
+                },
+                filteredClients() {
+                    return this.clientes.filter(c => {
+                        const q = this.clientSearchQuery.toLowerCase();
+                        return c.nombre_completo.toLowerCase().includes(q) ||
+                            (c.email && c.email.toLowerCase().includes(q));
+                    });
+                },
+                isReady() {
+                    return this.selectedCliente && this.routineName && this.days.some(d => d.exercises.length > 0);
+                }
+            },
+            methods: {
+                selectClient(cliente) {
+                    this.selectedCliente = cliente.pk;
+                    this.selectedClienteName = cliente.nombre_completo;
+                    this.showClientModal = false;
+                    this.clientSearchQuery = '';
+                },
+                selectImage(imgUrl) {
+                    this.routineImage = imgUrl;
+                    this.showImageModal = false;
+                },
+                toggleTag(tagName) {
+                    const index = this.selectedTags.indexOf(tagName);
+                    if (index > -1) this.selectedTags.splice(index, 1);
+                    else this.selectedTags.push(tagName);
+                },
+                hasDay(val) {
+                    return this.days.some(day => day.dias.includes(val));
+                },
+                getDayInitial(val) {
+                    return ['?', 'L', 'M', 'X', 'J', 'V', 'S', 'D'][val] || '?';
+                },
+                getDayName(val) {
+                    return ['?', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'][val] || 'Especial';
+                },
+                toggleDayForBlock(block, dayVal) {
+                    if (this.hasDay(dayVal) && !block.dias.includes(dayVal)) {
+                        // Si otro bloque ya lo tiene, no permitimos añadirlo aquí a menos que sea un toggle de eliminación
+                        return;
+                    }
+                    const idx = block.dias.indexOf(dayVal);
+                    if (idx > -1) {
+                        block.dias.splice(idx, 1);
+                    } else {
+                        block.dias.push(dayVal);
+                        block.dias.sort((a, b) => a - b);
+                    }
+                },
+                addSpecificDay(val, name) {
+                    if (this.hasDay(val)) return; // Prevent duplicate specific days
+                    this.days.push({ nombre_bloque: name, dias: [val], exercises: [], notas: '', orden: this.days.length });
+                    this.activeDayIndex = this.days.length - 1;
+                },
+                addDay() {
+                    this.days.push({ nombre_bloque: 'Nuevo Bloque', dias: [], exercises: [], notas: '', orden: this.days.length });
+                    this.activeDayIndex = this.days.length - 1;
+                },
+                removeDay(index) {
+                    this.days.splice(index, 1);
+                },
+                openCatalog(dayIndex) {
+                    this.activeDayIndex = dayIndex;
+                    this.showCatalogModal = true;
+                },
+                openModalForDay(ex) {
+                    this.previewingExercise = ex;
+                    this.editingExercise = false;
+                    this.modalData = {
+                        series: 3,
+                        reps: 12,
+                        peso: null,
+                        descanso: 60
+                    };
+                },
+                editExercise(dayIndex, exIndex) {
+                    this.activeDayIndex = dayIndex;
+                    this.activeExerciseIndex = exIndex;
+                    const ex = this.days[dayIndex].exercises[exIndex];
+
+                    // Try to find the GIF URL from the cached exercises if it's missing
+                    let gif_url = ex.gif_url;
+                    if (!gif_url && this.exercises) {
+                        const matched = this.exercises.find(e => String(e.id) === String(ex.id_externo));
+                        if (matched) gif_url = matched.gif_url;
+                    }
+
+                    this.previewingExercise = {
+                        id: ex.id_externo,
+                        name: ex.name,
+                        gif_url: gif_url
+                    };
+                    this.editingExercise = true;
+                    this.modalData = {
+                        series: ex.series,
+                        reps: ex.reps,
+                        peso: ex.peso,
+                        descanso: ex.descanso
+                    };
+                },
+                closeModal() {
+                    this.previewingExercise = null;
+                },
+                saveExerciseFromModal() {
+                    const day = this.days[this.activeDayIndex];
+                    const exerciseData = {
+                        id_externo: this.previewingExercise.id,
+                        name: this.previewingExercise.name,
+                        series: this.modalData.series,
+                        reps: this.modalData.reps,
+                        peso: this.modalData.peso,
+                        descanso: this.modalData.descanso,
+                        orden: this.editingExercise ? day.exercises[this.activeExerciseIndex].orden : day.exercises.length
+                    };
+
+                    if (this.editingExercise) {
+                        day.exercises[this.activeExerciseIndex] = exerciseData;
+                    } else {
+                        day.exercises.push(exerciseData);
+                    }
+                    this.closeModal();
+                    this.showCatalogModal = false;
+                },
+                removeExercise(dayIndex, exIndex) {
+                    this.days[dayIndex].exercises.splice(exIndex, 1);
+                },
+                async saveRoutine() {
+                    this.saving = true;
+                    const data = {
+                        cliente_id: this.selectedCliente,
+                        nombre: this.routineName,
+                        imagen_url: this.routineImage,
+                        days: this.days
+                    };
+
+                    try {
+                        const res = await fetch(window.location.href, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify(data)
+                        });
+                        const result = await res.json();
+                        if (result.status === 'ok') {
+                            window.location.href = "{% url 'admin_rutinas' %}";
+                        }
+                    } catch (err) {
+                        alert('Error al guardar la rutina.');
+                        console.error(err);
+                    } finally {
+                        this.saving = false;
+                    }
+                }
+            },
+            components: {
+                draggable: vuedraggable
+            }
+        }).mount('#app');
+    </script>
+    {% endblock %}
