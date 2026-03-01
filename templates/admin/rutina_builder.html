@@ -268,7 +268,7 @@
         </div>
 
         <!-- Client Selection Modal -->
-        <div v-if="showClientModal" class="fixed inset-0 bg-slate-900 z-50 flex flex-col animate-scaleIn">
+        <div v-if="showClientModal" class="fixed inset-0 bg-slate-900 z-[100] flex flex-col animate-scaleIn">
             <div
                 class="flex items-center justify-between p-4 md:p-6 border-b border-white/5 bg-slate-900 sticky top-0 z-30">
                 <h2 class="text-xl md:text-2xl font-black text-white uppercase tracking-tight">Seleccionar Cliente</h2>
@@ -327,7 +327,7 @@
             </div>
         </div>
         <!-- Image Selection Modal -->
-        <div v-if="showImageModal" class="fixed inset-0 bg-slate-900 z-50 flex flex-col animate-scaleIn">
+        <div v-if="showImageModal" class="fixed inset-0 bg-slate-900 z-[100] flex flex-col animate-scaleIn">
             <div
                 class="flex items-center justify-between p-4 md:p-6 border-b border-white/5 bg-slate-900 sticky top-0 z-30">
                 <h2 class="text-xl md:text-2xl font-black text-white uppercase tracking-tight">Imagen de Rutina</h2>
@@ -360,7 +360,7 @@
 
         <!-- Catalog Modal -->
         <div v-if="showCatalogModal"
-            class="fixed inset-0 bg-slate-900 z-50 flex flex-col animate-scaleIn md:inset-4 md:rounded-[3rem] md:border md:border-white/10 md:shadow-2xl overflow-hidden">
+            class="fixed inset-0 bg-slate-900 z-[100] flex flex-col animate-scaleIn md:inset-4 md:rounded-[3rem] md:border md:border-white/10 md:shadow-2xl overflow-hidden">
             <div
                 class="flex items-center justify-between p-4 md:p-6 border-b border-white/5 bg-slate-900 sticky top-0 z-30">
                 <h2 class="text-xl md:text-2xl font-black text-white uppercase tracking-tight">Catálogo</h2>
@@ -435,7 +435,7 @@
 
         <!-- Preview/Assignment Modal -->
         <div v-if="previewingExercise" @click="previewingExercise = null"
-            class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[60] flex items-end md:items-center justify-center p-0 md:p-4">
+            class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[110] flex items-end md:items-center justify-center p-0 md:p-4">
             <div @click.stop
                 class="bg-slate-900 w-full max-w-2xl flex flex-col md:flex-row rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl animate-fadeInUp md:animate-scaleIn border-t border-white/10 md:border md:border-white/5">
                 <div class="relative w-full md:w-1/2 bg-black h-48 md:h-auto">
@@ -535,6 +535,7 @@
                     showClientModal: false,
                     showImageModal: false,
                     editingExercise: false,
+                    activeDayIndex: null,
                     activeExerciseIndex: null,
                     presetImages: [
                         'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1000&auto=format&fit=crop',
@@ -656,7 +657,8 @@
                     this.previewingExercise = {
                         id: ex.id_externo,
                         name: ex.name,
-                        gif_url: gif_url
+                        gif_url: gif_url,
+                        tags: []
                     };
                     this.editingExercise = true;
                     this.modalData = {
@@ -682,7 +684,7 @@
                     };
 
                     if (this.editingExercise) {
-                        day.exercises[this.activeExerciseIndex] = exerciseData;
+                        day.exercises.splice(this.activeExerciseIndex, 1, exerciseData);
                     } else {
                         day.exercises.push(exerciseData);
                     }
