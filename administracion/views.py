@@ -245,8 +245,9 @@ def admin_rutina_builder(request, pk=None):
     # GET logic
     clientes = Usuario.objects.filter(rol=Usuario.Roles.CLIENTE)
     
-    api_key = os.environ.get('MICROSERVICE_API_KEY')
-    base_url = os.environ.get('MICROSERVICE_BASE_URL', 'https://exercisecatalog.dsem.app/api/')
+    from decouple import config
+    api_key = config('MICROSERVICE_API_KEY', default='')
+    base_url = config('MICROSERVICE_BASE_URL', default='https://exercisecatalog.dsem.app/api/')
     headers = {'Authorization': f'Api-Key {api_key}'}
     
     # Try to get data from cache first
