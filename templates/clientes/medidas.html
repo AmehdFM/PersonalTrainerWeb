@@ -1,0 +1,272 @@
+{% extends 'clientes/cliente_base.html' %}
+
+{% block title %}Medidas — GymPRO{% endblock %}
+
+{% block extra_styles %}
+#sheet-backdrop { transition: opacity 0.3s; }
+#sheet-panel { transition: transform 0.35s cubic-bezier(.22,.68,0,1.2); }
+{% endblock %}
+
+{% block content %}
+<div class="px-4 pt-5 pb-4 space-y-5 animate-fadeUp">
+
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-black text-white">Mis Medidas 📏</h1>
+        <p class="text-slate-500 text-sm mt-1">Seguimiento de tu progreso corporal</p>
+    </div>
+
+    <!-- Weight Chart -->
+    {% if chart_data %}
+    <div class="glass-light rounded-3xl p-5">
+        <p class="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-4">Evolución de peso (lbs)</p>
+        <div class="relative" style="height:100px">
+            <svg id="weight-chart" width="100%" height="100" viewBox="0 0 300 100" preserveAspectRatio="none"
+                class="overflow-visible">
+                <defs>
+                    <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3" />
+                        <stop offset="100%" stop-color="#3b82f6" stop-opacity="0" />
+                    </linearGradient>
+                </defs>
+                <!-- Rendered by JS below -->
+            </svg>
+        </div>
+        <!-- X axis labels -->
+        <div id="chart-labels" class="flex justify-between mt-2"></div>
+    </div>
+    {% endif %}
+
+    <!-- Last measurement summary -->
+    {% if historial %}
+    {% with last=historial.0 %}
+    <div class="glass-light rounded-3xl p-5">
+        <p class="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3">Última medición ·
+            {{ last.fecha|date:"d/m/Y" }}
+        </p>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="bg-slate-800/50 rounded-2xl p-3 text-center">
+                <p class="text-xs text-slate-500 font-bold uppercase mb-1">Peso</p>
+                <p class="text-xl font-black text-white">{{ last.peso_lbs }}<span
+                        class="text-sm text-slate-500 font-medium"> lbs</span></p>
+            </div>
+            {% if last.cintura %}
+            <div class="bg-slate-800/50 rounded-2xl p-3 text-center">
+                <p class="text-xs text-slate-500 font-bold uppercase mb-1">Cintura</p>
+                <p class="text-xl font-black text-white">{{ last.cintura }}<span
+                        class="text-sm text-slate-500 font-medium"> cm</span></p>
+            </div>
+            {% endif %}
+            {% if last.pecho %}
+            <div class="bg-slate-800/50 rounded-2xl p-3 text-center">
+                <p class="text-xs text-slate-500 font-bold uppercase mb-1">Pecho</p>
+                <p class="text-xl font-black text-white">{{ last.pecho }}<span
+                        class="text-sm text-slate-500 font-medium"> cm</span></p>
+            </div>
+            {% endif %}
+            {% if last.brazo_izq %}
+            <div class="bg-slate-800/50 rounded-2xl p-3 text-center">
+                <p class="text-xs text-slate-500 font-bold uppercase mb-1">Brazo</p>
+                <p class="text-xl font-black text-white">{{ last.brazo_izq }}<span
+                        class="text-sm text-slate-500 font-medium"> cm</span></p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endwith %}
+    {% endif %}
+
+    <!-- History List -->
+    <div>
+        <p class="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3">Historial</p>
+        {% if historial %}
+        <div class="space-y-2">
+            {% for m in historial %}
+            <div class="glass-light rounded-2xl p-4 flex items-center justify-between gap-4">
+                <div
+                    class="w-11 h-11 rounded-xl bg-slate-800 flex items-center justify-center flex-shrink-0 text-center">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 leading-none">{{ m.fecha|date:"d" }}</p>
+                        <p class="text-[8px] text-slate-600 uppercase font-bold leading-none">{{ m.fecha|date:"M" }}</p>
+                    </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-bold text-white text-sm">{{ m.peso_lbs }} lbs</p>
+                    <div class="flex gap-3 mt-0.5">
+                        {% if m.cintura %}
+                        <span class="text-[11px] text-slate-500">Cintura {{ m.cintura }}cm</span>
+                        {% endif %}
+                        {% if m.notas %}
+                        <span class="text-[11px] text-slate-600 truncate italic">{{ m.notas|truncatechars:25 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <p class="text-[10px] text-slate-600">{{ m.fecha|date:"d/m/y" }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <div class="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center mx-auto mb-3">
+                <span class="text-2xl">📊</span>
+            </div>
+            <p class="text-slate-400 font-semibold text-sm">Sin registros aún</p>
+            <p class="text-slate-600 text-xs mt-1">Toca el botón + para agregar tu primera medición</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="h-16"></div>
+</div>
+
+<!-- FAB Button -->
+<button id="btn-add" onclick="openSheet()"
+    class="fixed right-5 bg-blue-600 shadow-xl shadow-blue-900/50 w-14 h-14 rounded-2xl flex items-center justify-center text-white z-30 active:scale-90 transition-transform"
+    style="bottom: max(calc(env(safe-area-inset-bottom) + 80px), 96px)">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+    </svg>
+</button>
+
+<!-- Bottom Sheet -->
+<div id="sheet-backdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 opacity-0 pointer-events-none">
+</div>
+<div id="sheet-panel"
+    class="fixed left-0 right-0 bg-[#0f0f1a] border-t border-slate-800 z-50 rounded-t-3xl overflow-hidden"
+    style="bottom:0; transform:translateY(100%); max-height:85vh;">
+    <!-- Handle -->
+    <div class="flex justify-center pt-3 pb-1">
+        <div class="w-10 h-1 bg-slate-700 rounded-full"></div>
+    </div>
+    <div class="overflow-y-auto px-5 pb-8" style="max-height:calc(85vh - 40px)">
+        <div class="flex items-center justify-between mb-5">
+            <h2 class="text-lg font-black text-white">Nueva medición</h2>
+            <button onclick="closeSheet()" class="text-slate-500 hover:text-white transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <form method="post" action="{% url 'cliente_medidas' %}">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <!-- Date + Weight -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label
+                            class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Fecha</label>
+                        <input type="date" name="fecha" value="{{ hoy }}" required
+                            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:border-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Peso
+                            (lbs) *</label>
+                        <input type="number" name="peso_lbs" placeholder="180" step="0.1" required
+                            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:border-blue-500 outline-none transition placeholder:text-slate-600">
+                    </div>
+                </div>
+
+                <!-- Optional measurements -->
+                <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Medidas corporales (cm,
+                    opcionales)</p>
+                <div class="grid grid-cols-2 gap-3">
+                    {% for field_pair in field_list %}
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                            {{ field_pair.label }}
+                        </label>
+                        <input type="number" name="{{ field_pair.name }}" placeholder="—" step="0.1"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:border-blue-500 outline-none transition placeholder:text-slate-700">
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Notes -->
+                <div>
+                    <label
+                        class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Notas</label>
+                    <textarea name="notas" rows="2" placeholder="Ej: post-entrenamiento, en ayunas..."
+                        class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:border-blue-500 outline-none transition resize-none placeholder:text-slate-600"></textarea>
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-bold text-white transition active:scale-95 shadow-xl shadow-blue-900/30">
+                    Guardar medición
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if chart_data %}
+{{ chart_data|json_script:"chart-data" }}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Bottom Sheet
+    const backdrop = document.getElementById('sheet-backdrop');
+    const panel = document.getElementById('sheet-panel');
+
+    function openSheet() {
+        backdrop.style.opacity = '1';
+        backdrop.style.pointerEvents = 'auto';
+        panel.style.transform = 'translateY(0)';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeSheet() {
+        backdrop.style.opacity = '0';
+        backdrop.style.pointerEvents = 'none';
+        panel.style.transform = 'translateY(100%)';
+        document.body.style.overflow = '';
+    }
+    backdrop.addEventListener('click', closeSheet);
+
+    // Weight Chart (SVG)
+    const chartData = document.getElementById('chart-data');
+    if (chartData) {
+        const data = JSON.parse(chartData.textContent);
+        if (data.length >= 2) {
+            const svg = document.getElementById('weight-chart');
+            const W = 300, H = 100;
+            const weights = data.map(d => parseFloat(d.peso_lbs));
+            const minW = Math.min(...weights) - 2;
+            const maxW = Math.max(...weights) + 2;
+            const range = maxW - minW || 1;
+            const padX = 10;
+
+            const pts = data.map((d, i) => {
+                const x = padX + (i / (data.length - 1)) * (W - padX * 2);
+                const y = H - ((parseFloat(d.peso_lbs) - minW) / range) * (H - 10) - 5;
+                return [x, y];
+            });
+
+            const polyline = pts.map(p => p.join(',')).join(' ');
+            const area = `M${pts[0][0]},${H} ` + pts.map(p => `L${p[0]},${p[1]}`).join(' ') + ` L${pts[pts.length - 1][0]},${H} Z`;
+
+            svg.innerHTML += `
+            <path d="${area}" fill="url(#grad)"/>
+            <polyline points="${polyline}" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+            ${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#3b82f6" stroke="#050508" stroke-width="2"/>`).join('')}
+        `;
+
+            // Labels
+            const lblContainer = document.getElementById('chart-labels');
+            const step = Math.max(1, Math.floor(data.length / 5));
+            data.forEach((d, i) => {
+                if (i % step !== 0 && i !== data.length - 1) return;
+                const sp = document.createElement('span');
+                sp.className = 'text-[9px] text-slate-600 font-medium';
+                const date = new Date(d.fecha);
+                sp.textContent = `${date.getDate()}/${date.getMonth() + 1}`;
+                lblContainer.appendChild(sp);
+            });
+        }
+    }
+</script>
+{% endblock %}

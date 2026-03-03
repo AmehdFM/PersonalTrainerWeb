@@ -17,9 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from administracion.views import (
-    landing_page, admin_dashboard, admin_clientes, 
-    admin_rutinas, admin_cliente_detail, admin_rutina_builder, 
-    custom_login, register_user, logout_user
+    landing_page, admin_dashboard, admin_clientes,
+    admin_rutinas, admin_cliente_detail, admin_rutina_builder,
+    custom_login, register_user, logout_user, cliente_home,
+    cliente_inicio, cliente_rutina, cliente_rutina_play, cliente_medidas
 )
 
 urlpatterns = [
@@ -34,4 +35,10 @@ urlpatterns = [
     path('login/', custom_login, name='login'),
     path('register/', register_user, name='register'),
     path('logout/', logout_user, name='logout'),
+    # Cliente area
+    path('clientes/', cliente_home, name='cliente_home'),
+    path('clientes/home/', cliente_inicio, name='cliente_inicio'),
+    path('clientes/rutina/', cliente_rutina, name='cliente_rutina'),
+    path('clientes/rutina/<int:dia_id>/play/', cliente_rutina_play, name='cliente_rutina_play'),
+    path('clientes/medidas/', cliente_medidas, name='cliente_medidas'),
 ]

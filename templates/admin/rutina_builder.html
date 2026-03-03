@@ -189,7 +189,8 @@
                     <div class="p-6">
                         <!-- Draggable Exercises List -->
                         <draggable v-model="day.exercises" item-key="id_externo" handle=".drag-handle"
-                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            :component-data="{ class: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4' }"
+                            :options="{ delay: 150, delayOnTouchOnly: false, touchStartThreshold: 5 }">
                             <template #item="{ element: ex, index: eIndex }">
                                 <div @click="editExercise(dIndex, eIndex)"
                                     class="relative bg-slate-900/40 p-5 hover:bg-slate-800/60 transition group/card flex flex-col min-h-[140px] border border-transparent hover:border-blue-500/30 cursor-pointer rounded-2xl">
@@ -496,9 +497,9 @@
                     <button @click="saveExerciseFromModal"
                         class="w-full bg-blue-600 hover:bg-blue-500 py-3.5 rounded-xl font-bold transition flex items-center justify-center space-x-2 text-white shadow-lg shadow-blue-900/40 active:scale-95">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
-                        <span>CONFIRMAR Y AÑADIR</span>
+                        <span>[[ editingExercise ? 'GUARDAR CAMBIOS' : 'CONFIRMAR Y AÑADIR' ]]</span>
                     </button>
                 </div>
             </div>
@@ -658,6 +659,8 @@
                         peso: null,
                         descanso: 60
                     };
+                    // Close catalog modal now that we are in the preview/assignment step
+                    this.showCatalogModal = false;
                 },
                 editExercise(dayIndex, exIndex) {
                     this.activeDayIndex = dayIndex;

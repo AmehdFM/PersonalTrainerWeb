@@ -1,0 +1,157 @@
+{% extends 'clientes/cliente_base.html' %}
+
+{% block title %}Inicio — GymPRO{% endblock %}
+
+{% block content %}
+<div class="px-4 pt-5 pb-4 space-y-4 animate-fadeUp">
+
+    <!-- Greeting -->
+    <div>
+        <p class="text-slate-500 text-sm font-medium">{{ hoy|date:"l, d \d\e F" }}</p>
+        <h1 class="text-2xl font-black text-white mt-0.5">
+            ¡Hola, <span class="text-gradient">{{ cliente.nombre }}</span>! 👋
+        </h1>
+    </div>
+
+    <!-- Membership Card -->
+    {% if membresia %}
+    <div class="rounded-3xl p-5 relative overflow-hidden
+        {% if membresia.tipo.nombre == 'basica' %}bg-gradient-to-br from-blue-900/60 to-blue-800/30 border border-blue-700/30
+        {% elif membresia.tipo.nombre == 'pro' %}bg-gradient-to-br from-violet-900/60 to-purple-800/30 border border-violet-700/30
+        {% elif membresia.tipo.nombre == 'max' %}bg-gradient-to-br from-amber-900/60 to-yellow-800/30 border border-amber-600/30
+        {% endif %}">
+        <!-- Decoration blobs -->
+        <div
+            class="absolute -right-8 -top-8 w-32 h-32 rounded-full opacity-10
+            {% if membresia.tipo.nombre == 'basica' %}bg-blue-400{% elif membresia.tipo.nombre == 'pro' %}bg-violet-400{% else %}bg-amber-400{% endif %}">
+        </div>
+        <div
+            class="absolute -right-4 -bottom-8 w-24 h-24 rounded-full opacity-10
+            {% if membresia.tipo.nombre == 'basica' %}bg-blue-500{% elif membresia.tipo.nombre == 'pro' %}bg-purple-500{% else %}bg-yellow-500{% endif %}">
+        </div>
+
+        <div class="relative z-10">
+            <div class="flex items-start justify-between mb-3">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest opacity-60 mb-1">Tu membresía</p>
+                    <h2 class="text-xl font-black text-white">
+                        Plan
+                        {% if membresia.tipo.nombre == 'basica' %}Básico ⭐
+                        {% elif membresia.tipo.nombre == 'pro' %}Pro ⭐⭐
+                        {% else %}Max ⭐⭐⭐
+                        {% endif %}
+                    </h2>
+                </div>
+                <div class="text-right">
+                    <p class="text-2xl font-black text-white">{{ membresia.dias_restantes }}</p>
+                    <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">días restantes</p>
+                </div>
+            </div>
+            <!-- Progress bar -->
+            <div class="w-full bg-black/20 rounded-full h-1.5 overflow-hidden">
+                <div class="h-full rounded-full
+                    {% if membresia.tipo.nombre == 'basica' %}bg-blue-400{% elif membresia.tipo.nombre == 'pro' %}bg-violet-400{% else %}bg-amber-400{% endif %}"
+                    style="width: {{ membresia.dias_restantes }}%;max-width:100%"></div>
+            </div>
+            <p class="text-[11px] opacity-50 mt-2">Vence el {{ membresia.fecha_fin|date:"d/m/Y" }}</p>
+        </div>
+    </div>
+    {% else %}
+    <div class="rounded-3xl p-5 bg-slate-800/50 border border-slate-700/50 text-center">
+        <p class="text-slate-400 font-medium">Sin membresía activa</p>
+    </div>
+    {% endif %}
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 gap-3">
+        <div class="glass-light rounded-2xl p-4">
+            <p class="text-2xl font-black text-white">{{ rutinas.count }}</p>
+            <p class="text-[11px] text-slate-500 font-bold uppercase tracking-wider mt-1">Rutinas activas</p>
+            <svg class="w-5 h-5 text-blue-500 mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 10a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm7-3a1 1 0 011-1h3a1 1 0 011 1v9a1 1 0 01-1 1h-3a1 1 0 01-1-1V7zm7 4a1 1 0 011-1h3a1 1 0 011 1v5a1 1 0 01-1 1h-3a1 1 0 01-1-1v-5z" />
+            </svg>
+        </div>
+        <div class="glass-light rounded-2xl p-4">
+            <p class="text-2xl font-black text-white">{{ medidas_count }}</p>
+            <p class="text-[11px] text-slate-500 font-bold uppercase tracking-wider mt-1">Registros</p>
+            <svg class="w-5 h-5 text-violet-500 mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+        </div>
+    </div>
+
+    <!-- Today's Workout -->
+    {% if dia_hoy %}
+    <div class="animate-fadeUp" style="animation-delay:.1s">
+        <p class="text-[11px] font-black text-blue-400 uppercase tracking-widest mb-3">🔥 Entrenamiento de hoy</p>
+        <a href="{% url 'cliente_rutina_play' dia_hoy.pk %}"
+            class="block rounded-3xl overflow-hidden relative card-tap bg-gradient-to-br from-blue-700/40 to-violet-700/30 border border-blue-500/20 p-6">
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-violet-600/5"></div>
+            <div class="relative z-10 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-blue-300 font-bold uppercase tracking-widest mb-1">
+                        {{ dia_hoy.rutina.nombre }}
+                    </p>
+                    <h3 class="text-xl font-black text-white">{{ dia_hoy.nombre|default:"Día de entrenamiento" }}</h3>
+                    <p class="text-sm text-slate-400 mt-1">
+                        {{ dia_hoy.ejercicios.count }} ejercicio{{ dia_hoy.ejercicios.count|pluralize }}
+                    </p>
+                </div>
+                <div
+                    class="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-xl shadow-blue-900/50 flex-shrink-0">
+                    <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                    </svg>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% else %}
+    <div class="glass-light rounded-3xl p-5 text-center animate-fadeUp" style="animation-delay:.1s">
+        <div class="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center mx-auto mb-3">
+            <span class="text-2xl">😴</span>
+        </div>
+        <p class="text-slate-400 font-semibold text-sm">Hoy es día de descanso</p>
+        <p class="text-slate-600 text-xs mt-1">¡Recupera energías para mañana!</p>
+    </div>
+    {% endif %}
+
+    <!-- Routines List -->
+    {% if rutinas %}
+    <div class="animate-fadeUp" style="animation-delay:.2s">
+        <p class="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3">Tus rutinas</p>
+        <div class="space-y-3">
+            {% for rutina in rutinas %}
+            <a href="{% url 'cliente_rutina' %}"
+                class="block glass-light rounded-2xl p-4 flex items-center gap-4 card-tap">
+                {% if rutina.imagen_url %}
+                <img src="{{ rutina.imagen_url }}" class="w-14 h-14 rounded-xl object-cover flex-shrink-0">
+                {% else %}
+                <div
+                    class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-700/40 to-violet-700/40 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                    <h4 class="font-bold text-white text-sm truncate">{{ rutina.nombre }}</h4>
+                    <p class="text-slate-500 text-xs mt-0.5">
+                        {{ rutina.dias.count }} día{{ rutina.dias.count|pluralize }} de entrenamiento
+                    </p>
+                </div>
+                <svg class="w-4 h-4 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="h-4"></div>
+</div>
+{% endblock %}

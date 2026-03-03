@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>{% block title %}GymPRO{% endblock %}</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏋️‍♂️</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0a0a0f;
+            color: #e2e8f0;
+            overscroll-behavior: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Safe areas */
+        .safe-top {
+            padding-top: max(env(safe-area-inset-top), 0px);
+        }
+
+        .safe-bottom {
+            padding-bottom: max(env(safe-area-inset-bottom), 20px);
+        }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(15, 15, 25, 0.85);
+            backdrop-filter: blur(20px) saturate(1.4);
+            -webkit-backdrop-filter: blur(20px) saturate(1.4);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .glass-light {
+            background: rgba(30, 30, 50, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Gradients */
+        .text-gradient {
+            background: linear-gradient(135deg, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Membership badges */
+        .badge-basica {
+            background: linear-gradient(135deg, #1e3a5f, #2563eb);
+        }
+
+        .badge-pro {
+            background: linear-gradient(135deg, #4c1d95, #7c3aed);
+        }
+
+        .badge-max {
+            background: linear-gradient(135deg, #78350f, #d97706);
+        }
+
+        .badge-none {
+            background: linear-gradient(135deg, #1e293b, #334155);
+        }
+
+        /* Header accent */
+        .header-basica {
+            border-bottom: 1px solid rgba(37, 99, 235, 0.25);
+        }
+
+        .header-pro {
+            border-bottom: 1px solid rgba(124, 58, 237, 0.25);
+        }
+
+        .header-max {
+            border-bottom: 1px solid rgba(217, 119, 6, 0.25);
+        }
+
+        .header-none {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        /* Bottom nav active */
+        .tab-active {
+            color: #60a5fa;
+        }
+
+        .tab-inactive {
+            color: #475569;
+        }
+
+
+
+        /* Animations */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fadeUp {
+            animation: fadeUp 0.35s cubic-bezier(.22, .68, 0, 1.2) both;
+        }
+
+        .animate-scaleIn {
+            animation: scaleIn 0.25s ease both;
+        }
+
+        .animate-slideUp {
+            animation: slideUp 0.3s cubic-bezier(.22, .68, 0, 1.2) both;
+        }
+
+        /* Card hover */
+        .card-tap {
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .card-tap:active {
+            transform: scale(0.97);
+        }
+
+            {
+            % block extra_styles %
+        }
+
+            {
+            % endblock %
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body class="h-full overflow-hidden">
+
+    {% with mem_nombre=membresia.tipo.nombre|default:"none" %}
+    {% with header_class="header-"|add:mem_nombre %}
+
+    <!-- App Shell -->
+    <div class="flex flex-col h-screen" style="height: 100dvh;">
+
+        <!-- Status Bar / Header -->
+        <header class="glass safe-top flex-shrink-0 {{ header_class }} z-40">
+            <div class="flex items-center justify-between px-5 py-3">
+                <!-- Left: Logo + client name -->
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm text-white
+                    {% if mem_nombre == 'basica' %}bg-blue-600 shadow-lg shadow-blue-900/40
+                    {% elif mem_nombre == 'pro' %}bg-violet-600 shadow-lg shadow-violet-900/40
+                    {% elif mem_nombre == 'max' %}bg-amber-500 shadow-lg shadow-amber-900/40
+                    {% else %}bg-slate-700{% endif %}">
+                        {{ cliente.nombre|slice:":1"|upper }}{{ cliente.apellido|slice:":1"|upper }}
+                    </div>
+                    <div>
+                        <p class="text-[11px] text-slate-500 font-medium leading-none mb-0.5">Bienvenido</p>
+                        <p class="text-sm font-bold text-white leading-none">{{ cliente.nombre }} {{ cliente.apellido }}
+                        </p>
+                    </div>
+                </div>
+                <!-- Right: Membership badge -->
+                <div class="flex items-center gap-2">
+                    {% if membresia %}
+                    <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg
+                    {% if mem_nombre == 'basica' %}badge-basica text-blue-200
+                    {% elif mem_nombre == 'pro' %}badge-pro text-violet-200
+                    {% elif mem_nombre == 'max' %}badge-max text-amber-200
+                    {% endif %}">
+                        {% if mem_nombre == 'basica' %}⭐ Básica
+                        {% elif mem_nombre == 'pro' %}⭐⭐ Pro
+                        {% elif mem_nombre == 'max' %}⭐⭐⭐ Max
+                        {% endif %}
+                    </span>
+                    {% else %}
+                    <span
+                        class="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg badge-none text-slate-400">Sin
+                        plan</span>
+                    {% endif %}
+                    <!-- Admin Panel -->
+                    <a href="{% url 'dashboard' %}" class="text-slate-600 hover:text-slate-400 transition p-1"
+                        title="Panel de Admin">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </a>
+                    <!-- Switch user -->
+                    <a href="{% url 'cliente_home' %}" class="text-slate-600 hover:text-slate-400 transition p-1"
+                        title="Cambiar usuario">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="flex-1 overflow-y-auto overscroll-contain">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="glass safe-bottom flex-shrink-0 z-40" style="border-top: 1px solid rgba(255,255,255,0.06);">
+            <div class="flex items-center justify-around pt-2">
+                {% url 'cliente_inicio' as url_home %}
+                {% url 'cliente_rutina' as url_rutina %}
+                {% url 'cliente_medidas' as url_medidas %}
+                <!-- Home -->
+                <a href="{{ url_home }}" class="flex flex-col items-center gap-0.5 px-6 py-2 rounded-xl transition-all
+                      {% if request.path == url_home %}tab-active{% else %}tab-inactive{% endif %}">
+                    <svg class="w-6 h-6" fill="{% if request.path == url_home %}currentColor{% else %}none{% endif %}"
+                        stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <span class="text-[10px] font-bold uppercase tracking-wider">Inicio</span>
+                </a>
+                <!-- Rutina -->
+                <a href="{{ url_rutina }}" class="flex flex-col items-center gap-0.5 px-6 py-2 rounded-xl transition-all
+                      {% if '/rutina' in request.path %}tab-active{% else %}tab-inactive{% endif %}">
+                    <svg class="w-6 h-6" fill="{% if '/rutina' in request.path %}currentColor{% else %}none{% endif %}"
+                        stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3 10a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm7-3a1 1 0 011-1h3a1 1 0 011 1v9a1 1 0 01-1 1h-3a1 1 0 01-1-1V7zm7 4a1 1 0 011-1h3a1 1 0 011 1v5a1 1 0 01-1 1h-3a1 1 0 01-1-1v-5z" />
+                    </svg>
+                    <span class="text-[10px] font-bold uppercase tracking-wider">Rutina</span>
+                </a>
+                <!-- Medidas -->
+                <a href="{{ url_medidas }}" class="flex flex-col items-center gap-0.5 px-6 py-2 rounded-xl transition-all
+                      {% if '/medidas' in request.path %}tab-active{% else %}tab-inactive{% endif %}">
+                    <svg class="w-6 h-6" fill="{% if '/medidas' in request.path %}currentColor{% else %}none{% endif %}"
+                        stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span class="text-[10px] font-bold uppercase tracking-wider">Medidas</span>
+                </a>
+            </div>
+        </nav>
+
+    </div>
+    {% endwith %}
+    {% endwith %}
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+
+</html>
